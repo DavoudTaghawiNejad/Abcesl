@@ -1,5 +1,5 @@
 import numpy as np
-from .abce import NotEnoughGoods, Inventory
+from abce import NotEnoughGoods
 
 
 def doubleEntry(debitAccount, creditAccount, amount: np.longdouble):
@@ -59,7 +59,7 @@ AccountType = enum(ASSET=1,
 # A simple economic agent will usually have a single Ledger, whereas complex firms and banks can have several books
 # (as in branch banking for example).
 class Ledger:
-    def __init__(self, me) -> None:
+    def __init__(self, me, inventory) -> None:
         # A StressLedger is a list of accounts (for quicker searching)
 
         # Each Account includes an inventory to hold one type of contract.
@@ -69,7 +69,7 @@ class Ledger:
 
         # A book is initially created with a cash account (it's the simplest possible book)
         self.assetAccounts = {}  # a hashmap from a contract to a assetAccount
-        self.inventory = Inventory()
+        self.inventory = inventory
         self.contracts = Contracts()
         self.goodsAccounts = {}
         self.liabilityAccounts = {}  # a hashmap from a contract to a liabilityAccount
@@ -185,10 +185,10 @@ class Ledger:
 
     def addCash(self, amount: np.longdouble) -> None:
         # (dr cash, cr equity)
-        self.create("cash", np.longdouble(amount), 1.0)
+        self.create("money", np.longdouble(amount), 1.0)
 
     def subtractCash(self, amount: np.longdouble) -> None:
-        self.destroy("cash", np.longdouble(amount), 1.0)
+        self.destroy("money", np.longdouble(amount), 1.0)
 
     # Operation to pay back a liability loan; debit liability and credit cash
     # @param amount amount to pay back
@@ -199,7 +199,7 @@ class Ledger:
         assert self.inventory.getCash() >= amount  # Pre-condition: liquidity has been raised.
 
         # (dr liability, cr cash )
-        doubleEntry(self.liabilityAccount, self.getGoodsAccount("cash"), amount)
+        doubleEntry(self.liabilityAccount, self['money'], amount)
 
     # If I've sold an asset, debit cash and credit asset
     # @param amount the *value* of the asset
@@ -207,7 +207,7 @@ class Ledger:
         assetAccount = self.assetAccounts.get(assetType)
 
         # (dr cash, cr asset)
-        doubleEntry(self.getGoodsAccount("cash"), assetAccount, amount)
+        doubleEntry(self["money"], assetAccount, amount)
 
     # Operation to cancel a Loan to someone (i.e. cash in a Loan in the Assets side).
     #
@@ -254,7 +254,7 @@ class Ledger:
         return self.assetAccounts.get(contract)
 
     def getCashAccount(self):
-        return self.getGoodsAccount("cash")
+        return self["money"]
 
     # if an Asset loses value, I must debit equity and credit asset
     # @param valueLost the value lost

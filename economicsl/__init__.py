@@ -6,98 +6,81 @@ from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
 
 from .obligations import Obligation
 from .accounting import AccountType  # NOQA
-from .abce import NotEnoughGoods  # NOQA
+from abce import NotEnoughGoods  # NOQA
+import abce
 
 
-class Simulation:
-    def __init__(self) -> None:
-        self.time = 0
-
-    def advance_time(self) -> None:
-        self.time += 1
-
-    def getTime(self) -> int:
-        return self.time
-
-
-class Agent:
-    def __init__(self, name: str, simulation: Simulation) -> None:
-        self.name = name
-        self.simulation = simulation
+class Agent(abce.Agent):
+    def __init__(self, id, group, trade_logging,
+                 database, logger, random_seed, num_managers):
+        super().__init__(id, group, trade_logging,
+                 database, logger, random_seed, num_managers)
+        self.name = (group, self.id)
         self.alive = True
-        self.mailbox = Mailbox()
-        self.mainLedger = Ledger(self)
-        self.obligationsAndGoodsMailbox = ObligationsAndGoodsMailbox()
+        self.mainLedger = Ledger(self, self._haves)
+        self.obligationsAndGoodsMailbox = ObligationsAndGoodsMailbox(self)
+
+    def init(self, agent_parameters, sim_parameters):
+        super().init(agent_parameters, sim_parameters)
+        self.simulation = sim_parameters
+
+    def _begin_subround(self):
+        super()._begin_subround()
+        self.step()
 
     def add(self, contract) -> None:
-        if (contract.getAssetParty() == self):
+        if (contract.getAssetParty() == self.name):
             # This contract is an asset for me.
             self.mainLedger.addAsset(contract)
-        elif (contract.getLiabilityParty() == self):
+        elif (contract.getLiabilityParty() == self.name):
             # This contract is a liability for me
             self.mainLedger.addLiability(contract)
+        else:
+            print(contract, contract.getAssetParty(), contract.getLiabilityParty(), (self.name))
+            raise Exception("who the fuck is this" )
 
-    def getName(self) -> str:
-        return self.name
+    def getName(self):
+        return str(self.name)
 
-    def getTime(self) -> int:
-        return self.simulation.getTime()
+    def getTime(self):
+        return self.simulation.time
 
-    def getSimulation(self) -> Simulation:
+    def getSimulation(self):
         return self.simulation
 
     def isAlive(self) -> bool:
         return self.alive
 
     def addCash(self, amount: np.longdouble) -> None:
-        self.mainLedger.addCash(amount)
+        self.mainLedger.inventory.create('money', amount)
 
     def getCash_(self) -> np.longdouble:
-        return self.mainLedger.inventory.getCash()
+        return self.mainLedger.inventory['money']
 
     def getMainLedger(self) -> Ledger:
         return self.mainLedger
 
     def step(self) -> None:
-        for good_message in self.obligationsAndGoodsMailbox.goods_inbox:
-            self.getMainLedger().create(good_message.good_name, good_message.amount, good_message.value)
-        self.obligationsAndGoodsMailbox.goods_inbox.clear()
         self.obligationsAndGoodsMailbox.step()
-        self.mailbox.step()
 
     def sendObligation(self, recipient, obligation: Obligation) -> None:
         if isinstance(obligation, ObligationMessage):
-            recipient.receiveObligation(obligation)
+            self.message(recipient.group, recipient.id, '!oblmsg', obligation)
             self.obligationsAndGoodsMailbox.addToObligationOutbox(obligation)
         else:
             msg = ObligationMessage(self, obligation)
-            recipient.receiveMessage(msg)
+            self.message(recipient.group, recipient.id, '!oblmsg', msg)
 
-    def receiveObligation(self, obligation: Obligation) -> None:
-        self.obligationsAndGoodsMailbox.receiveObligation(obligation)
-
-    def receiveMessage(self, msg: ObligationMessage) -> None:
-        if isinstance(msg, ObligationMessage):
-            self.obligationsAndGoodsMailbox.receiveMessage(msg)
-        else:
-            self.mailbox.receiveMessage(msg)
-
-    def receiveGoodMessage(self, good_message) -> None:
-        self.obligationsAndGoodsMailbox.receiveGoodMessage(good_message)
 
     def printMailbox(self) -> None:
         self.obligationsAndGoodsMailbox.printMailbox()
 
-    def message(self, receiver, topic, content):
-        message = Message(self, topic, content)
-        receiver.receiveMessage(message)
-        return message
+    def message(self, receiver, topic, content, overload=None):
 
-    def get_messages(self, topic=None):
-        return self.mailbox.get_messages(topic)
+        if not isinstance(receiver, tuple):
+            receiver = receiver.name
+        super().message(receiver[0], receiver[1], topic, content)
 
-    def get_obligation_inbox(self) -> List[Obligation]:
-        return self.obligationsAndGoodsMailbox.getObligation_inbox()
 
     def get_obligation_outbox(self) -> List[Obligation]:
         return self.obligationsAndGoodsMailbox.getObligation_outbox()
@@ -130,79 +113,8 @@ class Action:
     def getAgent(self) -> Agent:
         return self.me
 
-    def getSimulation(self) -> Simulation:
+    def getSimulation(self):
         return self.me.getSimulation()
-
-
-class Trade(Agent):
-    def __init__(self, name: str, simulation: Simulation) -> None:
-        super().__init__(name, simulation)
-
-    # Trade good one against good two
-    def barter(self, trade_partner, name_get, amount_get, value_get, name_give,
-               amount_give, value_give) -> None:
-        raise NotImplementedError
-
-    def give(self, recipient: Agent, good_name: str, amount_give: np.longdouble) -> None:
-        value = self.getMainLedger().getPhysicalThingValue(good_name)
-        self.getMainLedger().destroy(good_name, amount_give)
-        good_message = GoodMessage(good_name, amount_give, value)
-        recipient.receiveGoodMessage(good_message)
-
-
-class Message:
-    def __init__(self, sender: Agent, topic: str, message) -> None:
-        self.sender = sender
-        self.message = message
-        self.topic = topic
-
-    def getSender(self) -> Agent:
-        return self.sender
-
-    def getMessage(self):
-        return self.message
-
-    def getTopic(self) -> str:
-        return self.topic
-
-
-class Mailbox:
-    def __init__(self) -> None:
-        self.message_unopened = []
-        self.message_inbox = []
-
-    def receiveMessage(self, msg) -> None:
-        self.message_unopened.append(msg)
-        # print("ObligationMessage sent. " + msg.getSender().getName() +
-        #        " message: " + msg.getMessage());
-
-    def step(self) -> None:
-        # Move all messages in the obligation_unopened to the obligation_inbox
-        self.message_inbox += list(self.message_unopened)
-
-        self.message_unopened = []
-
-        # Move all messages in the obligation_unopened to the obligation_inbox
-
-    def get_messages(self, topic=None) -> List[Message]:
-        messages = []
-        if not topic:
-            messages = self.message_inbox
-            self.message_inbox = []
-        else:
-            # TODO this is probably fucking inefficient
-            for message in list(self.message_inbox):
-                if message.getTopic() == topic:
-                    messages.append(message)
-                    self.message_inbox.remove(message)
-        return messages
-
-
-class GoodMessage:
-    def __init__(self, good_name: str, amount: np.longdouble, value: np.longdouble) -> None:
-        self.good_name = good_name
-        self.amount = np.longdouble(amount)
-        self.value = value
 
 
 class Contract:
