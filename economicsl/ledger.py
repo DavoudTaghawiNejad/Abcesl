@@ -42,23 +42,23 @@ class Ledger:
 
     def getAssetValueOf(self, contractType):
         # return assetAccounts.get(contractType).getBalance();
-        return sum([c.getValue() for c in self.contracts.allAssets if isinstance(c, contractType)])
+        return sum((c.getValue() for c in self.contracts.allAssets[contractType]))
 
     def getLiabilityValueOf(self, contractType):
         # return liabilityAccounts.get(contractType).getBalance();
-        return sum([c.getValue() for c in self.contracts.allLiabilities if isinstance(c, contractType)])
+        return sum((c.getValue() for c in self.contracts.allLiabilities[contractType]))
 
     def getAllAssets(self):
-        return self.contracts.allAssets
+        return [item for sublist in self.contracts.allAssets.values() for item in sublist]
 
     def getAllLiabilities(self):
-        return self.contracts.allLiabilities
+        return [item for sublist in self.contracts.allLiabilities.values() for item in sublist]
 
     def getAssetsOfType(self, contractType):
-        return [c for c in self.contracts.allAssets if isinstance(c, contractType)]
+        return [c for c in self.contracts.allAssets[contractType]]
 
     def getLiabilitiesOfType(self, contractType):
-        return [c for c in self.contracts.allLiabilities if isinstance(c, contractType)]
+        return [c for c in self.contracts.allLiabilities[contractType]]
 
     def addAccount(self, account, contractType):
         switch = account.getAccountType()
@@ -82,7 +82,7 @@ class Ledger:
 
         assetAccount.debit(contract.getValue())
 
-        self.contracts.allAssets.append(contract)
+        self.contracts.allAssets[type(contract)].append(contract)
 
     # Adding a liability means debiting equity and crediting the account
     # relevant to that type of contract.
@@ -98,7 +98,7 @@ class Ledger:
         liabilityAccount.credit(contract.getValue())
 
         # Add to the general inventory?
-        self.contracts.allLiabilities.append(contract)
+        self.contracts.allLiabilities[type(contract)].append(contract)
 
     def create(self, name, amount, value):
         self.inventory.create(name, amount)
