@@ -1,3 +1,4 @@
+"""Installs abcesl, the contracting and accounting package for ABCE"""
 from setuptools import setup
 
 
@@ -9,4 +10,5 @@ setup(name='economicsl',
       author_email='rhtbot@protonmail.com',
       license='MIT',
       packages=['economicsl'],
-      zip_safe=False)
+      zip_safe=False,
+      install_requires=['abce'])

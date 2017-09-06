@@ -12,9 +12,9 @@ import abce
 
 class Agent(abce.Agent):
     def __init__(self, id, group, trade_logging,
-                 database, logger, random_seed, num_managers):
+                 database, random_seed, num_managers, agent_parameters, simulation_parameters):
         super().__init__(id, group, trade_logging,
-                 database, logger, random_seed, num_managers)
+                 database, random_seed, num_managers, agent_parameters, simulation_parameters)
         self.name = (group, self.id)
         self.alive = True
         self.mainLedger = Ledger(self, self._haves)
