@@ -1,6 +1,3 @@
-def doubleEntry(debitAccount, creditAccount, amount):
-    debitAccount.debit(amount)
-    creditAccount.credit(amount)
 
 from collections import defaultdict
 
