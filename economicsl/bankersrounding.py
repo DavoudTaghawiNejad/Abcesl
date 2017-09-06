@@ -1,7 +1,5 @@
-import numpy as np
-
 class BankersRounding:
-    def bankersRounding(self, value: np.longdouble) -> int:
+    def bankersRounding(self, value) -> int:
         s = int(value)
         t = abs(value - s)
 

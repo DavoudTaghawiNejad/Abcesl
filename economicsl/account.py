@@ -2,7 +2,7 @@ class Account:
     def __init__(self, name, accountType, startingBalance=0.0) -> None:
         self.name = name
         self.accountType = accountType
-        self.balance = np.longdouble(startingBalance)
+        self.balance = startingBalance
 
     # A Debit is a positive change for ASSET and EXPENSES accounts, and negative for the rest.
     def debit(self, amount):

@@ -1,6 +1,4 @@
 from typing import List
-import numpy as np
-
 from .ledger import Ledger
 from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
 

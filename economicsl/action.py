@@ -1,5 +1,4 @@
 from typing import List
-import numpy as np
 
 from .accounting import Ledger
 from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
@@ -18,11 +17,11 @@ class Action:
     def perform(self) -> None:
         print("Model.actionsRecorder.recordAction(this); not called because deleted")
 
-    def getAmount(self) -> np.longdouble:
+    def getAmount(self):
         return self.amount
 
-    def setAmount(self, amount: np.longdouble):
-        self.amount = np.longdouble(amount)
+    def setAmount(self, amount):
+        self.amount = amount
 
     def getTime(self) -> int:
         return self.me.getTime()

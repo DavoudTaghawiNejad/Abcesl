@@ -1,10 +1,9 @@
-import numpy as np
 from abce import NotEnoughGoods
 from .account import Account
 from .ledger import Ledger
 
 
-def doubleEntry(debitAccount, creditAccount, amount: np.longdouble):
+def doubleEntry(debitAccount, creditAccount, amount):
     debitAccount.debit(amount)
     creditAccount.credit(amount)
 
@@ -14,20 +13,20 @@ class Contracts:
         self.allLiabilities = []
 
 class Account:
-    def __init__(self, name, accountType, startingBalance: np.longdouble=0.0) -> None:
+    def __init__(self, name, accountType, startingBalance=0.0) -> None:
         self.name = name
         self.accountType = accountType
-        self.balance = np.longdouble(startingBalance)
+        self.balance = startingBalance
 
     # A Debit is a positive change for ASSET and EXPENSES accounts, and negative for the rest.
-    def debit(self, amount: np.longdouble):
+    def debit(self, amount):
         if (self.accountType == AccountType.ASSET) or (self.accountType == AccountType.EXPENSES):
             self.balance += amount
         else:
             self.balance -= amount
 
     # A Credit is a negative change for ASSET and EXPENSES accounts, and positive for the rest.
-    def credit(self, amount: np.longdouble):
+    def credit(self, amount):
         if ((self.accountType == AccountType.ASSET) or (self.accountType == AccountType.EXPENSES)):
             self.balance -= amount
         else:
@@ -36,7 +35,7 @@ class Account:
     def getAccountType(self):
         return self.accountType
 
-    def getBalance(self) -> np.longdouble:
+    def getBalance(self):
         return self.balance
 
     def getName(self) -> str:
@@ -81,20 +80,20 @@ class Ledger:
         self.liabilityAccounts = {}  # a hashmap from a contract to a liabilityAccount
         self.me = me
 
-    def getAssetValue(self) -> np.longdouble:
+    def getAssetValue(self):
         return sum([aa.getBalance() for aa in self.assetAccounts.values()])
 
-    def getLiabilityValue(self) -> np.longdouble:
+    def getLiabilityValue(self):
         return sum([la.getBalance() for la in self.liabilityAccounts.values()])
 
-    def getEquityValue(self) -> np.longdouble:
+    def getEquityValue(self):
         return self.getAssetValue() - self.getLiabilityValue()
 
-    def getAssetValueOf(self, contractType) -> np.longdouble:
+    def getAssetValueOf(self, contractType):
         # return assetAccounts.get(contractType).getBalance();
         return sum([c.getValue() for c in self.contracts.allAssets if isinstance(c, contractType)])
 
-    def getLiabilityValueOf(self, contractType) -> np.longdouble:
+    def getLiabilityValueOf(self, contractType):
         # return liabilityAccounts.get(contractType).getBalance();
         return sum([c.getValue() for c in self.contracts.allLiabilities if isinstance(c, contractType)])
 
@@ -189,11 +188,11 @@ class Ledger:
         elif (new_value < old_value):
             self.getGoodsAccount(name).credit(old_value - new_value)
 
-    def addCash(self, amount: np.longdouble) -> None:
+    def addCash(self, amount) -> None:
         # (dr cash, cr equity)
         self.create("money", np.longdouble(amount), 1.0)
 
-    def subtractCash(self, amount: np.longdouble) -> None:
+    def subtractCash(self, amount) -> None:
         self.destroy("money", np.longdouble(amount), 1.0)
 
     # Operation to pay back a liability loan; debit liability and credit cash

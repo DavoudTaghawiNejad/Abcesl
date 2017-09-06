@@ -1,5 +1,4 @@
 from typing import List
-import numpy as np
 
 from .accounting import Ledger
 from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
@@ -48,10 +47,10 @@ class Agent(abce.Agent):
     def isAlive(self) -> bool:
         return self.alive
 
-    def addCash(self, amount: np.longdouble) -> None:
+    def addCash(self, amount) -> None:
         self.mainLedger.inventory.create('money', amount)
 
-    def getCash_(self) -> np.longdouble:
+    def getCash_(self):
         return self.mainLedger.inventory['money']
 
     def getMainLedger(self) -> Ledger:

@@ -136,10 +136,10 @@ class Ledger:
 
     def addCash(self, amount) -> None:
         # (dr cash, cr equity)
-        self.create("money", np.longdouble(amount), 1.0)
+        self.create("money", amount, 1.0)
 
     def subtractCash(self, amount) -> None:
-        self.destroy("money", np.longdouble(amount), 1.0)
+        self.destroy("money", amount, 1.0)
 
     # Operation to pay back a liability loan; debit liability and credit cash
     # @param amount amount to pay back

@@ -1,9 +1,8 @@
-import numpy as np
 from abce import NotEnoughGoods
 from .account import Account
 from ledger import Ledger
 
-def doubleEntry(debitAccount, creditAccount, amount: np.longdouble):
+def doubleEntry(debitAccount, creditAccount, amount):
     debitAccount.debit(amount)
     creditAccount.credit(amount)
 
