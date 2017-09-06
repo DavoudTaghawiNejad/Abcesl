@@ -1,3 +1,6 @@
+from .accounttype import AccountType
+
+
 class Account:
     def __init__(self, name, accountType, startingBalance=0.0) -> None:
         self.name = name
@@ -24,16 +27,5 @@ class Account:
     def getBalance(self):
         return self.balance
 
-    def getName(self) -> str:
+    def getName(self):
         return self.name
-
-
-def enum(**enums):
-    return type('Enum', (), enums)
-
-
-AccountType = enum(ASSET=1,
-                   LIABILITY=2,
-                   INCOME=4,
-                   EXPENSES=5,
-                   GOOD=6)
