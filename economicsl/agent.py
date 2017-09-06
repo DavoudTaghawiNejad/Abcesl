@@ -1,10 +1,10 @@
 from typing import List
 
-from .accounting import Ledger
+from .ledger import Ledger
 from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
 
 from .obligations import Obligation
-from .accounting import AccountType  # NOQA
+from .accounttype import AccountType  # NOQA
 from abce import NotEnoughGoods  # NOQA
 import abce
 
@@ -15,10 +15,7 @@ class Agent(abce.Agent):
         self.alive = True
         self.mainLedger = Ledger(self, self._haves)
         self.obligationsAndGoodsMailbox = ObligationsAndGoodsMailbox(self)
-
-    def init(self, agent_parameters, sim_parameters):
-        super().init(agent_parameters, sim_parameters)
-        self.simulation = sim_parameters
+        self.simulation = kwargs['simulation_parameters']
 
     def _begin_subround(self):
         super()._begin_subround()
@@ -33,7 +30,7 @@ class Agent(abce.Agent):
             self.mainLedger.addLiability(contract)
         else:
             print(contract, contract.getAssetParty(), contract.getLiabilityParty(), (self.name))
-            raise Exception("who the fuck is this" )
+            raise Exception("who the fuck is this")
 
     def getName(self):
         return str(self.name)
@@ -67,7 +64,6 @@ class Agent(abce.Agent):
             msg = ObligationMessage(self, obligation)
             self.message(recipient.group, recipient.id, '!oblmsg', msg)
 
-
     def printMailbox(self) -> None:
         self.obligationsAndGoodsMailbox.printMailbox()
 
@@ -76,7 +72,6 @@ class Agent(abce.Agent):
         if not isinstance(receiver, tuple):
             receiver = receiver.name
         super().message(receiver[0], receiver[1], topic, content)
-
 
     def get_obligation_outbox(self) -> List[Obligation]:
         return self.obligationsAndGoodsMailbox.getObligation_outbox()

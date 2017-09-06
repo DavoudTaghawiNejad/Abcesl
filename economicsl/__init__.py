@@ -3,7 +3,7 @@ from .ledger import Ledger
 from .obligations import ObligationMessage, ObligationsAndGoodsMailbox
 
 from .obligations import Obligation
-from .accounting import AccountType  # NOQA
+from .accounttype import AccountType  # NOQA
 from abce import NotEnoughGoods  # NOQA
 import abce
 from .agent import Agent
