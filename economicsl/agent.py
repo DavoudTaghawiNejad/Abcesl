@@ -29,7 +29,7 @@ class Agent(abce.Agent):
             self.mainLedger.addLiability(contract)
         else:
             print(contract, contract.getAssetParty(), contract.getLiabilityParty(), (self.name))
-            raise Exception("who the fuck is this" )
+            raise Exception("who the fuck is this")
 
     def getName(self):
         return str(self.name)
