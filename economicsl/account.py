@@ -2,7 +2,7 @@ from .accounttype import AccountType
 
 
 class Account:
-    def __init__(self, name, accountType, startingBalance=0.0) -> None:
+    def __init__(self, name, accountType, startingBalance=0) -> None:
         self.name = name
         self.accountType = accountType
         self.balance = startingBalance
