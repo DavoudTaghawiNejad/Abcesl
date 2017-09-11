@@ -22,16 +22,21 @@ class Ledger:
         # Note that separate hashmaps are needed for asset accounts and liability accounts: the same contract
         # type (such as Loan) can sometimes be an asset and sometimes a liability.
 
-        # A book is initially created with a cash account (it's the simplest possible book)
-        self.assetAccounts = {}  # a hashmap from a contract to a assetAccount
+         A book is initially created with a cash account (it's the simplest possible book)
+        """
+        self.assetAccounts = {}  # a dict from a contract to a assetAccount
         self.inventory = inventory
         self.contracts = Contracts()
         self.goodsAccounts = {}
-        self.liabilityAccounts = {}  # a hashmap from a contract to a liabilityAccount
+        self.liabilityAccounts = {}  # a dict from a contract to a liabilityAccount
         self.me = me
 
     def getAssetValue(self):
-        return sum([aa.getBalance() for aa in self.assetAccounts.values()])
+        """ Value of all assets and goods.
+        Whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value """
+        return (sum([aa.getBalance() for aa in self.assetAccounts.values()]) +
+                sum([aa.getBalance() for aa in self.goodsAccounts.values()]))
 
     def getLiabilityValue(self):
         return sum([la.getBalance() for la in self.liabilityAccounts.values()])
@@ -54,7 +59,11 @@ class Ledger:
         return [item for sublist in self.contracts.allLiabilities.values() for item in sublist]
 
     def getAssetsOfType(self, contractType):
-        return [c for c in self.contracts.allAssets[contractType]]
+        """ returns all contracts of a certain type that are booked as assets,
+        whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value.
+        """
+        return self.contracts.allAssets[contractType]
 
     def getLiabilitiesOfType(self, contractType):
         """ returns all contracts of a certain type that are booked as liabilities,
@@ -67,8 +76,10 @@ class Ledger:
         """ adds a new account """
         switch = account.getAccountType()
         if switch == AccountType.ASSET:
+            assert contractType not in self.assetAccounts
             self.assetAccounts[contractType] = account
         elif switch == AccountType.LIABILITY:
+            assert contractType not in self.liabilityAccounts
             self.liabilityAccounts[contractType] = account
 
         # Not sure what to do with INCOME, EXPENSES
