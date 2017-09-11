@@ -1,4 +1,3 @@
-
 # This is the main class implementing double entry org.economicsl.accounting. All public operations provided by this class
 # are performed as a double entry operation, i.e. a pair of (dr, cr) operations.
 #
