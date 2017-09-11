@@ -11,11 +11,11 @@
 from .contracts import Contracts
 from .account import Account
 from .accounttype import AccountType
-
+from math import isclose
 
 class Ledger:
-    def __init__(self, me, inventory) -> None:
-        # A StressLedger is a list of accounts (for quicker searching)
+    def __init__(self, me, inventory):
+        """ A StressLedger is a list of accounts (for quicker searching)
 
         # Each Account includes an inventory to hold one type of contract.
         # These hashmaps are used to access the correct account for a given type of contract.
@@ -57,9 +57,14 @@ class Ledger:
         return [c for c in self.contracts.allAssets[contractType]]
 
     def getLiabilitiesOfType(self, contractType):
-        return [c for c in self.contracts.allLiabilities[contractType]]
+        """ returns all contracts of a certain type that are booked as liabilities,
+        whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value.
+        """
+        return self.contracts.allLiabilities[contractType]
 
-    def addAccount(self, account, contractType):
+    def _addAccount(self, account, contractType):
+        """ adds a new account """
         switch = account.getAccountType()
         if switch == AccountType.ASSET:
             self.assetAccounts[contractType] = account
@@ -72,12 +77,18 @@ class Ledger:
     # and crediting equity.
     # @param contract an Asset contract to add
     def addAsset(self, contract):
-        assetAccount = self.assetAccounts.get(contract)
+        """ Adding an asset means debiting the account relevant to that type of contract
+            and crediting equity.
+            Args:
+
+                contract:
+                    an Asset contract to add """
+        assetAccount = self.assetAccounts.get(type(contract))
 
         if assetAccount is None:
             # If there doesn't exist an Account to hold this type of contract, we create it
             assetAccount = Account(contract.getName(self.me), AccountType.ASSET)
-            self.addAccount(assetAccount, contract)
+            self._addAccount(assetAccount, type(contract))
 
         assetAccount.debit(contract.getValue())
 
@@ -87,12 +98,15 @@ class Ledger:
     # relevant to that type of contract.
     # @param contract a Liability contract to add
     def addLiability(self, contract):
-        liabilityAccount = self.liabilityAccounts.get(contract)
+        """ Adding a liability means debiting equity and crediting the account
+            relevant to that type of contract.
+            @param contract a Liability contract to add """
+        liabilityAccount = self.liabilityAccounts.get(type(contract))
 
         if liabilityAccount is None:
             # If there doesn't exist an Account to hold this type of contract, we create it
             liabilityAccount = Account(contract.getName(self.me), AccountType.LIABILITY)
-            self.addAccount(liabilityAccount, contract)
+            self._addAccount(liabilityAccount, type(contract))
 
         liabilityAccount.credit(contract.getValue())
 
@@ -156,10 +170,17 @@ class Ledger:
         # (dr liability, cr cash )
         doubleEntry(self.liabilityAccount, self['money'], amount)
 
-    # If I've sold an asset, debit cash and credit asset
-    # @param amount the *value* of the asset
-    def sellAsset(self, amount, assetType):
-        assetAccount = self.assetAccounts.get(assetType)
+    def sell_asset(self, amount, asset):
+        """ Books the sales of an asset.
+        Args:
+            amount:
+                the *value* of the asset
+        """
+        assert amount <= asset.quantity
+        asset.quantity -= amount
+        if isclose(asset.quantity, 0):
+            self.contracts.allAssets(type(asset)).remove(asset)
+        assetAccount = self.assetAccounts[type(asset)]
 
         # (dr cash, cr asset)
         doubleEntry(self["money"], assetAccount, amount)
@@ -211,21 +232,48 @@ class Ledger:
     def getCashAccount(self):
         return self["money"]
 
-    # if an Asset loses value, I must debit equity and credit asset
-    # @param valueLost the value lost
-    def devalueAsset(self, asset, valueLost):
-        self.assetAccounts.get(asset).credit(valueLost)
+    def devalueAsset(self, asset, delta_value):
+        """ if an Asset loses value, I must debit equity and credit asset
+        Args:
+            asset
+
+            delta_value:
+                the value lost
+        """
+        self.assetAccounts[type(asset)].credit(delta_value)
 
         # Todo: perform a check here that the Asset account balances match the value of the assets. (?)
 
-    def appreciateAsset(self, asset, valueLost):
-        self.assetAccounts.get(asset).debit(valueLost)
+    def appreciateAsset(self, asset, delta_value):
+        """ appreciates a certain asset
+        Args:
+            asset
 
-    def devalueLiability(self, liability, valueLost):
-        self.liabilityAccounts.get(liability).debit(valueLost)
+            delta_value:
+                the value gained
+        """
+        self.assetAccounts[type(asset)].debit(delta_value)
 
-    def appreciateLiability(self, liability, valueLost):
-        self.liabilityAccounts.get(liability).credit(valueLost)
+    def devalueLiability(self, liability, delta_value):
+        """ devalues a certain liability
+        Args:
+            liability
+
+            delta_value:
+                the value lost
+        """
+        self.liabilityAccounts[type(liability)].debit(delta_value)
+
+    def appreciateLiability(self, liability, delta_value):
+        """ appreciates a certain liability
+        Args:
+            liability
+
+            delta_value:
+                the value gained
+        """
+
+        self.liabilityAccounts[type(liability)].credit(delta_value)
 
 
 

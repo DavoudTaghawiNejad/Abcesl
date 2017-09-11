@@ -32,7 +32,7 @@ class ObligationsMailbox:
             if o.isDue() and not o.isFulfilled():
                 o.fulfil()
 
-    def step(self) -> None:
+    def _step(self) -> None:
         self.obligation_inbox.extend(self.owner.get_messages('!oblmsg'))
         # Remove all fulfilled requests
         self.obligation_inbox = [o for o in self.obligation_inbox if not o.isFulfilled()]

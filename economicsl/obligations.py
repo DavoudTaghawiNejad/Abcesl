@@ -1,6 +1,3 @@
-from .obligationmessage import ObligationMessage
-from .obligationsmailbox import ObligationsMailbox as ObligationsAndGoodsMailbox
-
 class Obligation:
     def __init__(self, contract, amount, timeLeftToPay: int) -> None:
         self.amount = amount
