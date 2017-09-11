@@ -1,13 +1,24 @@
-# This is the main class implementing double entry org.economicsl.accounting. All public operations provided by this class
-# are performed as a double entry operation, i.e. a pair of (dr, cr) operations.
-#
-# A Ledger contains a set of accounts, and is the interface between an agent and its accounts. Agents cannot
-# directly interact with accounts other than via a Ledger.
-#
-# At the moment, a Ledger contains an account for each type of contract, plus an equity account and a cash account.
-#
-# A simple economic agent will usually have a single Ledger, whereas complex firms and banks can have several books
-# (as in branch banking for example).
+""" This is the main class implementing double entry org.economicsl.accounting. All public operations provided by this class
+are performed as a double entry operation, i.e. a pair of (dr, cr) operations.
+
+A Ledger contains a set of accounts, and is the interface between an agent and its accounts. Agents cannot
+directly interact with accounts other than via a Ledger.
+
+At the moment, a Ledger contains an account for each type of contract, plus an equity account and a cash account.
+It also has a book for every type of good it holds. Good accounts are not to be confused with the inventory.
+
+A simple economic agent will usually have a single Ledger, whereas complex firms and banks can have several books
+(as in branch banking for example).
+
+There are three different things:
+1. The contracts which is an inventory of contracts.
+3. The inventory which is the inventory of physical goods
+3. The accounts which running value of each contract type or good type
+
+Every operation either changes contracts and accounts or inventory and accounts.
+Except for reevaluation of a good or a contract which does only affect the accounts.
+
+"""
 from .contracts import Contracts
 from .account import Account
 from .accounttype import AccountType
@@ -17,10 +28,10 @@ class Ledger:
     def __init__(self, me, inventory):
         """ A StressLedger is a list of accounts (for quicker searching)
 
-        # Each Account includes an inventory to hold one type of contract.
-        # These hashmaps are used to access the correct account for a given type of contract.
-        # Note that separate hashmaps are needed for asset accounts and liability accounts: the same contract
-        # type (such as Loan) can sometimes be an asset and sometimes a liability.
+        Each Account includes an inventory to hold one type of contract.
+        These hashmaps are used to access the correct account for a given type of contract.
+        Note that separate hashmaps are needed for asset accounts and liability accounts: the same contract
+        type (such as Loan) can sometimes be an asset and sometimes a liability.
 
          A book is initially created with a cash account (it's the simplest possible book)
         """
@@ -39,23 +50,35 @@ class Ledger:
                 sum([aa.getBalance() for aa in self.goodsAccounts.values()]))
 
     def getLiabilityValue(self):
+        """ Value of all Liabilities.
+        Whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value """
         return sum([la.getBalance() for la in self.liabilityAccounts.values()])
 
     def getEquityValue(self):
         return self.getAssetValue() - self.getLiabilityValue()
 
     def getAssetValueOf(self, contractType):
-        # return assetAccounts.get(contractType).getBalance();
+        """ Evaluates all contracts of a certain type, given that there are treated as
+        assets, and returns their value
+        Not to be confused with the book value.
+        Whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value"""
         return sum((c.getValue() for c in self.contracts.allAssets[contractType]))
 
     def getLiabilityValueOf(self, contractType):
-        # return liabilityAccounts.get(contractType).getBalance();
+        """ Evaluates all contracts of a certain type, given that they are treated
+        as liabilities, and returns their value. Not to be confused with the book value.
+        Whether they are booked as assets or liabilities depends on the value at acquisition,
+        not the current value"""
         return sum((c.getValue() for c in self.contracts.allLiabilities[contractType]))
 
     def getAllAssets(self):
+        """ returns all contracts assets """
         return [item for sublist in self.contracts.allAssets.values() for item in sublist]
 
     def getAllLiabilities(self):
+        """ return all contracts that are liabilities """
         return [item for sublist in self.contracts.allLiabilities.values() for item in sublist]
 
     def getAssetsOfType(self, contractType):
@@ -84,9 +107,6 @@ class Ledger:
 
         # Not sure what to do with INCOME, EXPENSES
 
-    # Adding an asset means debiting the account relevant to that type of contract
-    # and crediting equity.
-    # @param contract an Asset contract to add
     def addAsset(self, contract):
         """ Adding an asset means debiting the account relevant to that type of contract
             and crediting equity.
@@ -105,9 +125,6 @@ class Ledger:
 
         self.contracts.allAssets[type(contract)].append(contract)
 
-    # Adding a liability means debiting equity and crediting the account
-    # relevant to that type of contract.
-    # @param contract a Liability contract to add
     def addLiability(self, contract):
         """ Adding a liability means debiting equity and crediting the account
             relevant to that type of contract.
@@ -121,15 +138,37 @@ class Ledger:
 
         liabilityAccount.credit(contract.getValue())
 
-        # Add to the general inventory?
+
         self.contracts.allLiabilities[type(contract)].append(contract)
 
     def create(self, name, amount, value):
+        """ Creates a good and books it into the according account with
+        the value value
+
+        Args:
+            good
+
+            amount
+
+            value
+        This function overwrites the abce.Agent's create function """
         self.inventory.create(name, amount)
         physicalthingsaccount = self.getGoodsAccount(name)
         physicalthingsaccount.debit(amount * value)
 
     def destroy(self, name, amount, value=None):
+        """ deletes a good and books it into the according account.
+        If no value is specified, the book value is calculated:
+        account_value / number of goods.
+
+        Args:
+            good
+
+            amount
+
+            value (optional)
+
+        This function overwrites the abce.Agent's delete function"""
         if value is None:
             try:
                 value = self.getPhysicalThingValue(name)
@@ -141,6 +180,7 @@ class Ledger:
             self.getGoodsAccount(name).credit(amount * value)
 
     def getGoodsAccount(self, name):
+        """ access to a particular goods account """
         account = self.goodsAccounts.get(name)
         if account is None:
             account = Account(name, AccountType.GOOD)
@@ -148,14 +188,15 @@ class Ledger:
         return account
 
     def getPhysicalThingValue(self, name):
+        """ Returns the value of a physical thing """
         try:
             return self.getGoodsAccount(name).getBalance() / self.inventory.getGood(name)
         except:
             return 0.0
 
-    # Reevaluates the current stock of phisical goods at a specified value and books
-    # the change to org.economicsl.accounting
     def revalueGoods(self, name, value):
+        """ Reevaluates the current stock of physical goods at a specified value and books.
+        """
         old_value = self.getGoodsAccount(name).getBalance()
         new_value = self.inventory.getGood(name) * value
         if (new_value > old_value):
@@ -164,16 +205,22 @@ class Ledger:
             self.getGoodsAccount(name).credit(old_value - new_value)
 
     def addCash(self, amount) -> None:
+        """ depreciated adds "money" as a physical good """
         # (dr cash, cr equity)
         self.create("money", amount, 1.0)
 
     def subtractCash(self, amount) -> None:
         self.destroy("money", amount, 1.0)
 
-    # Operation to pay back a liability loan; debit liability and credit cash
-    # @param amount amount to pay back
-    # @param loan the loan which is being paid back
     def payLiability(self, amount, loan):
+        """ Operation to pay back a liability loan; debit liability and credit cash
+
+        Args:
+            amount:
+                amount to pay back
+
+            loan:
+                the loan which is being paid back """
         self.liabilityAccount = self.liabilityAccounts.get(loan)
 
         assert self.inventory.getCash() >= amount  # Pre-condition: liquidity has been raised.
@@ -196,16 +243,22 @@ class Ledger:
         # (dr cash, cr asset)
         doubleEntry(self["money"], assetAccount, amount)
 
-    # Operation to cancel a Loan to someone (i.e. cash in a Loan in the Assets side).
-    #
-    # I'm using this for simplicity but note that this is equivalent to selling an asset.
-    # @param amount the amount of loan that is cancelled
     def pullFunding(self, amount, loan):
+        """Operation to cancel a Loan to someone (i.e. cash in a Loan in the Assets side).
+
+        I'm using this for simplicity but note that this is equivalent to selling an asset.
+
+        Args:
+            amount:
+                the amount of loan that is cancelled
+        """
         loanAccount = self.getAccountFromContract(loan)
         # (dr cash, cr asset )
         doubleEntry(self.getCashAccount(), loanAccount, amount)
+        # TODO make sure that adds money
 
     def printBalanceSheet(self, me):
+        """ prints a balance sheet """
         print("Asset accounts:\n---------------")
         for a in self.assetAccounts.values():
             print(a.getName(), "-> %.2f" % a.getBalance())

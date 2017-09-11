@@ -1,3 +1,4 @@
+""" There are 5 account types in the AccountType class ASSET, LIABILITY, INCOME, EXPENSES, GOOD """
 import enum
 
 

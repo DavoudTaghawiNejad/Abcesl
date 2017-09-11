@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # abcESL documentation build configuration file, created by
-# sphinx-quickstart on Wed Sep  6 19:39:15 2017.
+# sphinx-quickstart on Wed Sep  6 20:33:17 2017.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -31,12 +31,7 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +48,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'abcESL'
 copyright = '2017, Rudy Tanin, Davoud Taghawi-Nejad, Alissa Kleinnijenhuis, Thom Wetzer'
-author = 'Rudy Tanin, Davoud Taghawi-Nejad, Alissa Kleinnijenhuis, Thom Wetzer'
+author = 'R. Tanin, D. Taghawi-Nejad, A. Kleinnijenhuis, T. Wetzer, D. Farmer'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -101,6 +96,21 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Custom sidebar templates, must be a dictionary that maps document names
+# to template names.
+#
+# This is required for the alabaster theme
+# refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',  # needs 'show_related': True theme option to display
+        'searchbox.html',
+        'donate.html',
+    ]
+}
+
 
 # -- Options for HTMLHelp output ------------------------------------------
 
@@ -133,7 +143,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'abcESL.tex', 'abcESL Documentation',
-     'Rudy Tanin, Davoud Taghawi-Nejad, Alissa Kleinnijenhuis, Thom Wetzer', 'manual'),
+     'R. Tanin, D. Taghawi-Nejad, A. Kleinnijenhuis, T. Wetzer, D. Farmer', 'manual'),
 ]
 
 
@@ -160,27 +170,3 @@ texinfo_documents = [
 
 
 
-# -- Options for Epub output ----------------------------------------------
-
-# Bibliographic Dublin Core info.
-epub_title = project
-epub_author = author
-epub_publisher = author
-epub_copyright = copyright
-
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#
-# epub_identifier = ''
-
-# A unique identification for the text.
-#
-# epub_uid = ''
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
-
-
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
