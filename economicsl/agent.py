@@ -16,7 +16,7 @@ class Agent(abce.Agent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.alive = True
-        self.mainLedger = Ledger(self, self._haves)
+        self.mainLedger = Ledger(self, self._inventory)
         self.inventory = self.mainLedger.inventory
         self.obligationsMailbox = ObligationsMailbox(self)
         self.simulation = kwargs['simulation_parameters']
